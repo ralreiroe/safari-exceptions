@@ -1,0 +1,2 @@
+Here is file a.txt
+it has two lines
