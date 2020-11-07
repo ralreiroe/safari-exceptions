@@ -31,7 +31,7 @@ class CollectorImpl<T, A, R> implements java.util.stream.Collector<T, A, R> {
     private final Set<Characteristics> characteristics;
 
     CollectorImpl(Supplier<A> supplier,
-                  BiConsumer<A, T> accumulator,
+                  BiConsumer<A, T> accumulator, //consumes two and produces no result; namely BiConsumer::accept(List::add)
                   BinaryOperator<A> combiner,
                   Function<A, R> finisher,
                   Set<Characteristics> characteristics) {
@@ -81,11 +81,12 @@ public class GenericsExplaination {
         Stream<List<String>> str = Stream.of(oldStaffDoesNotHaveConsistentTokens, activeFlagsCanBeMissing);
         Stream<String> stringStream = str.flatMap(List::stream);
 
-        List<String> collect = stringStream.collect(
+        //in line 86 we have told the compiler the real types but don't need to...can also just use new CollectorImpl<>
+        List<String> collect = stringStream.collect(            //this makes T=String
                 new CollectorImpl<String, List<String>, List<String>>(
-                        () -> new ArrayList(),  //binds Supplier<A> to Supplier<ArrayList<String>>
-                        (a, s) -> a.add(s),
-                        (a1, a2) -> {
+                        () -> new ArrayList(),  //this makes A=ArrayList<String>
+                        (a, s) -> a.add(s),     //BiConsumer<A,T>=BiConsumer<ArrayList<String>, String>
+                        (a1, a2) -> {           //Function<A,R>=Function<ArrayList<String>,ArrayList<String> hence R=ArrayList<String>
                             a1.addAll(a2);
                             return a1;
                         },
