@@ -1,57 +1,100 @@
 package ralftest;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 public class GenericsExplaination {
 
-    public static void main(String[] args) {
+    public interface Collector<T, A, R> {
+        Supplier<A> supplier();
 
+        BiConsumer<A, T> accumulator();
 
-        //collection of lambdas.
-        //these are not used until this is passed to a eg. Stream<String>
-        //    <R, A> R collect(Collector<? super T, A, R> collector);
-        Collector<String, ArrayList<String>, List<String>> mycollector = new Collector<String, ArrayList<String>, List<String>>() {
+        BinaryOperator<A> combiner();
 
-            @Override
-            public Supplier<ArrayList<String>> supplier() {
-                return () -> new ArrayList<>();
-            }
+        Function<A, R> finisher();
 
-            @Override
-            public BiConsumer<ArrayList<String>, String> accumulator() {
-                return (l, e) -> l.add(e);
-            }
+        Set<Characteristics> characteristics();
+    }
 
-            @Override
-            public BinaryOperator<ArrayList<String>> combiner() {
-                return (l1, l2) -> {
-                    l1.addAll(l2);
-                    return l1;
-                };
-            }
+    enum Characteristics {
+        CONCURRENT,
+        UNORDERED,
+        IDENTITY_FINISH
+    }
 
-            @Override
-            public Function<ArrayList<String>, List<String>> finisher() {
-                return al -> (List<String>) al;
-            }
+    public static class CollectorImpl<T, A, R> implements java.util.stream.Collector<T, A, R> {
+        private final Supplier<A> supplier;
+        private final BiConsumer<A, T> accumulator;
+        private final BinaryOperator<A> combiner;
+        private final Function<A, R> finisher;
+        private final Set<Characteristics> characteristics;
 
-            @Override
-            public Set<Characteristics> characteristics() {
-                return EnumSet.of(Collector.Characteristics.IDENTITY_FINISH);
-            }
-        };
+        CollectorImpl(Supplier<A> supplier,
+                      BiConsumer<A, T> accumulator,
+                      BinaryOperator<A> combiner,
+                      Function<A, R> finisher,
+                      Set<Characteristics> characteristics) {
+            this.supplier = supplier;
+            this.accumulator = accumulator;
+            this.combiner = combiner;
+            this.finisher = finisher;
+            this.characteristics = characteristics;
+        }
+
+        @Override
+        public BiConsumer<A, T> accumulator() {
+            return accumulator;
+        }
+
+        @Override
+        public Supplier<A> supplier() {
+            return supplier;
+        }
+
+        @Override
+        public BinaryOperator<A> combiner() {
+            return combiner;
+        }
+
+        @Override
+        public Function<A, R> finisher() {
+            return finisher;
+        }
+
+        @Override
+        public Set<Characteristics> characteristics() {
+            return characteristics;
+        }
+
     }
 
 
+    public static void main(String[] args) {
 
+        final List<String> oldStaffDoesNotHaveConsistentTokens = List.of("reserve-adjustment.metrics", "Other");
+        final List<String> activeFlagsCanBeMissing = List.of("active");
+        Stream<List<String>> str = Stream.of(oldStaffDoesNotHaveConsistentTokens, activeFlagsCanBeMissing);
+        Stream<String> stringStream = str.flatMap(List::stream);
+
+        stringStream.collect(
+                new CollectorImpl<String, List<String>, List<String>>(
+                        () -> new ArrayList(),  //binds Supplier<A> to ArrayList<String>
+                        (a, s) -> a.add(s),
+                        (a1, a2) ->  { a1.addAll(a2); return a1; },
+                        (a) -> a,
+                        Set.of(Characteristics.IDENTITY_FINISH)
+                )
+        )
+
+
+    }
 
 
 }
