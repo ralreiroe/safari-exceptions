@@ -9,9 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class GenericsExplaination {
-
-    public interface Collector<T, A, R> {
+     interface Collector<T, A, R> {
         Supplier<A> supplier();
 
         BiConsumer<A, T> accumulator();
@@ -20,14 +18,10 @@ public class GenericsExplaination {
 
         Function<A, R> finisher();
 
-        Set<Characteristics> characteristics();
+        Set<java.util.stream.Collector.Characteristics> characteristics();
     }
+public class GenericsExplaination {
 
-    enum Characteristics {
-        CONCURRENT,
-        UNORDERED,
-        IDENTITY_FINISH
-    }
 
     public static class CollectorImpl<T, A, R> implements java.util.stream.Collector<T, A, R> {
         private final Supplier<A> supplier;
@@ -73,7 +67,7 @@ public class GenericsExplaination {
             return characteristics;
         }
 
-    }
+    };
 
 
     public static void main(String[] args) {
@@ -83,15 +77,20 @@ public class GenericsExplaination {
         Stream<List<String>> str = Stream.of(oldStaffDoesNotHaveConsistentTokens, activeFlagsCanBeMissing);
         Stream<String> stringStream = str.flatMap(List::stream);
 
-        stringStream.collect(
+        List<String> collect = stringStream.collect(
                 new CollectorImpl<String, List<String>, List<String>>(
                         () -> new ArrayList(),  //binds Supplier<A> to ArrayList<String>
                         (a, s) -> a.add(s),
-                        (a1, a2) ->  { a1.addAll(a2); return a1; },
+                        (a1, a2) -> {
+                            a1.addAll(a2);
+                            return a1;
+                        },
                         (a) -> a,
-                        Set.of(Characteristics.IDENTITY_FINISH)
+                        Set.of(java.util.stream.Collector.Characteristics.IDENTITY_FINISH)
                 )
-        )
+        );
+
+        System.out.println("collect = " + collect);
 
 
     }
