@@ -9,6 +9,18 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+/**
+ * ralf's own Collector for generics illustration purposes
+ * the real one:  @see java.util.stream.Collector
+ * @param <T>
+ * @param <A>
+ * @param <R>
+ *
+ *     how is a Collector used?
+ *     A: we can pass a Collector to a Stream<T> to produce an R. A is some intermediary object
+ *         <R, A> R Stream<T>#collect(Collector<? super T, A, R> collector);
+ */
+
 //declaring stuff - all generic
 interface Collector<T, A, R> {
     Supplier<A> supplier();
@@ -74,15 +86,17 @@ public class GenericsExplaination {
 
     public static void main(String[] args) {
 
-        //now we are creating objects
-        //the compiler needs to  generic types  replaced with real types
+        //only now are we are creating objects finally, and only now are we actually doing something
+        //(in the implementation of collect)
+        //the compiler needs to now replace the generic types with real types
         final List<String> oldStaffDoesNotHaveConsistentTokens = List.of("reserve-adjustment.metrics", "Other");
         final List<String> activeFlagsCanBeMissing = List.of("active");
         Stream<List<String>> str = Stream.of(oldStaffDoesNotHaveConsistentTokens, activeFlagsCanBeMissing);
         Stream<String> stringStream = str.flatMap(List::stream);
 
-        //in line 86 we have told the compiler the real types but don't need to...can also just use new CollectorImpl<>
+        //in line 100 we tell the compiler the real types but don't need to...can also just use new CollectorImpl<>
         List<String> collect = stringStream.collect(            //this makes T=String
+
                 new CollectorImpl<String, List<String>, List<String>>(
                         () -> new ArrayList(),  //this makes A=ArrayList<String>
                         (a, s) -> a.add(s),     //BiConsumer<A,T>=BiConsumer<ArrayList<String>, String>
